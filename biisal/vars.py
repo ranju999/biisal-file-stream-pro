@@ -1,6 +1,6 @@
 # (c) adarsh-goel (c) @biisal
 import os
-from os import getenv, environ
+from os import getenv, environ  as env
 from dotenv import load_dotenv
 
 load_dotenv()
