@@ -33,7 +33,7 @@ logging.getLogger("aiohttp").setLevel(logging.ERROR)
 logging.getLogger("pyrogram").setLevel(logging.ERROR)
 logging.getLogger("aiohttp.web").setLevel(logging.ERROR)
 
-server = web.AppRunner(web_server())
+server = web.AppRunner(await web_server())
 loop = asyncio.get_event_loop()
 
 async def start_services():
