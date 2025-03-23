@@ -35,7 +35,6 @@ files = glob.glob(ppath)
 StreamBot.start()
 loop = asyncio.get_event_loop()
 
-
 async def start_services():
     print('\n')
     print('------------------- Initalizing Telegram Bot -------------------')
@@ -49,27 +48,17 @@ async def start_services():
     await initialize_clients()
     print("------------------------------ DONE ------------------------------")
     print('\n')
-    print('--------------------------- Importing ---------------------------')
-    for name in files:
-        with open(name) as a:
-            patt = Path(a.name)
-            plugin_name = patt.stem.replace(".py", "")
-            plugins_dir = Path(f"biisal/bot/plugins/{plugin_name}.py")
-            import_path = ".plugins.{}".format(plugin_name)
-            spec = importlib.util.spec_from_file_location(import_path, plugins_dir)
-            load = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(load)
-            sys.modules["biisal.bot.plugins." + plugin_name] = load
-            print("Imported => " + plugin_name)
-    if Var.ON_HEROKU:
-        print("------------------ Starting Keep Alive Service ------------------")
-        print()
-        asyncio.create_task(ping_server())
-    print('-------------------- Initalizing Web Server -------------------------')
-    app = web.AppRunner(await web_server())
-    await app.setup()
-    bind_address = "0.0.0.0" if Var.ON_HEROKU else Var.BIND_ADRESS
-    await web.TCPSite(app, bind_address, Var.PORT).start()
+    print("--------------------- Initializing Web Server ---------------------")
+    await server.setup()
+    await web.TCPSite(server, Var.BIND_ADDRESS, Var.PORT).start()
+    print("------------------------------ DONE ------------------------------")
+    print()
+    print("------------------------- Service Started -------------------------")
+    print("                        bot =>> {}".format(bot_info.first_name))
+    if bot_info.dc_id:
+        print("                        DC ID =>> {}".format(str(bot_info.dc_id)))
+    print(" URL =>> {}".format(Var.URL))
+    print("------------------------------------------------------------------")
     print('----------------------------- DONE ---------------------------------------------------------------------')
     print('\n')
     print('---------------------------------------------------------------------------------------------------------')
@@ -79,11 +68,8 @@ async def start_services():
     print('\n')
     print('----------------------- Service Started -----------------------------------------------------------------')
     print('                        bot =>> {}'.format((await StreamBot.get_me()).first_name))
-    print('                        server ip =>> {}:{}'.format(bind_address, Var.PORT))
+  #  print('                        server ip =>> {}:{}'.format(bind_address, Var.PORT))
     print('                        Owner =>> {}'.format((Var.OWNER_USERNAME)))
-    if Var.ON_HEROKU:
-        print('                        app runnng on =>> {}'.format(Var.FQDN))
-    print('---------------------------------------------------------------------------------------------------------')
     print(LOGO)
     try: 
         await StreamBot.send_message(chat_id=Var.OWNER_ID[0] ,text='<b>ᴊᴀɪ sʜʀᴇᴇ ᴋʀɪsʜɴᴀ 😎\nʙᴏᴛ ʀᴇsᴛᴀʀᴛᴇᴅ !!</b>')
