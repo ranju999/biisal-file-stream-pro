@@ -33,7 +33,6 @@ logging.getLogger("aiohttp").setLevel(logging.ERROR)
 logging.getLogger("pyrogram").setLevel(logging.ERROR)
 logging.getLogger("aiohttp.web").setLevel(logging.ERROR)
 
-server = web.AppRunner(await web_server())
 loop = asyncio.get_event_loop()
 
 async def start_services():
@@ -56,8 +55,9 @@ async def start_services():
     print("------------------------------ DONE ------------------------------")
     print()
     print("--------------------- Initializing Web Server ---------------------")
-    await server.setup()
-    await web.TCPSite(server, Var.BIND_ADDRESS, Var.PORT).start()
+    app = web.AppRunner(await web_server())
+    await app.setup()
+    await web.TCPSite(app, Var.BIND_ADDRESS, Var.PORT).start()
     print("------------------------------ DONE ------------------------------")
     print()
     print("------------------------- Service Started -------------------------")
