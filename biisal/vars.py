@@ -18,25 +18,19 @@ class Var(object):
     WORKERS = int(getenv('WORKERS', '4'))
     BIN_CHANNEL = int(getenv('BIN_CHANNEL', '-1002114619001'))
     NEW_USER_LOG = int(getenv('NEW_USER_LOG', '-1002114619001'))
-    PORT = int(getenv('PORT', '8080'))
-    BIND_ADRESS = str(getenv('WEB_SERVER_BIND_ADDRESS', '0.0.0.0'))
     PING_INTERVAL = int(environ.get("PING_INTERVAL", "1200"))  # 20 minutes
     OWNER_ID = [int(x) for x in os.environ.get("OWNER_ID", "5977931010").split()]
-    NO_PORT = bool(getenv('NO_PORT', False))
     APP_NAME = None
     OWNER_USERNAME = str(getenv('OWNER_USERNAME', 'BOT_OWNER26'))
-    if 'DYNO' in environ:
-        ON_HEROKU = True
-        APP_NAME = str(getenv('APP_NAME')) #dont need to fill anything here
-    
-    else:
-        ON_HEROKU = False
-    FQDN = str(getenv('FQDN', '0.0.0.0:2626')) if not ON_HEROKU or getenv('FQDN', '') else APP_NAME+'.herokuapp.com'
-    HAS_SSL=bool(getenv('HAS_SSL',True))
-    if HAS_SSL:
-        URL = "https://{}/".format(FQDN)
-    else:
-        URL = "http://{}/".format(FQDN)
+    PORT = int(env.get("PORT", 8080))
+    BIND_ADDRESS = str(env.get("BIND_ADDRESS", "0.0.0.0"))
+    PING_INTERVAL = int(env.get("PING_INTERVAL", "1200"))
+    HAS_SSL = str(env.get("HAS_SSL", "0").lower()) in ("1", "true", "t", "yes", "y")
+    NO_PORT = str(env.get("NO_PORT", "0").lower()) in ("1", "true", "t", "yes", "y")
+    FQDN = str(env.get("FQDN", BIND_ADDRESS))
+    URL = "http{}://{}{}/".format(
+        "s" if HAS_SSL else "", FQDN, "" if NO_PORT else ":" + str(PORT)
+    )
     DATABASE_URL = str(getenv('DATABASE_URL', 'mongodb+srv://aman727587:aman@cluster0.bk39x.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0'))
     UPDATES_CHANNEL = str(getenv('UPDATES_CHANNEL', 'av_botz')) 
     BANNED_CHANNELS = list(set(int(x) for x in str(getenv("BANNED_CHANNELS", "")).split()))   
