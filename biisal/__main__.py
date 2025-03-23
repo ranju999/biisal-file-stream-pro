@@ -1,57 +1,91 @@
 import os
+import sys
+import glob
 import asyncio
 import logging
-from aiohttp import web
-from .bot import StreamBot  # ✅ Pyrogram Bot Client
+import traceback
+import logging.handlers as handlers
+import importlib
+from pathlib import Path
+from pyrogram import idle
+from .bot import StreamBot
 from .vars import Var
+from aiohttp import web
 from .server import web_server
 from .utils.keepalive import ping_server
 from biisal.bot.clients import initialize_clients
-from pyrogram import idle  # ✅ Ensure Pyrogram's idle() is imported
 
-# ✅ Debugging Logs Enable करें
+LOGO = """
+ ____ ___ ___ ____    _    _     
+| __ )_ _|_ _/ ___|  / \  | |    
+|  _ \| | | |\___ \ / _ \ | |    
+| |_) | | | | ___) / ___ \| |___ 
+|____/___|___|____/_/   \_\_____|"""
+
 logging.basicConfig(
-    level=logging.DEBUG,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
+    level=logging.INFO,
+    datefmt="%d/%m/%Y %H:%M:%S",
+    format='[%(asctime)s] {%(pathname)s:%(lineno)d} %(levelname)s - %(message)s',
+    handlers=[logging.StreamHandler(stream=sys.stdout),
+              handlers.RotatingFileHandler("streambot.log", mode="a", maxBytes=104857600, backupCount=2, encoding="utf-8")],)
 
-async def keep_alive():
-    """Server को Active रखने के लिए Keep-Alive Task"""
-    while True:
-        await asyncio.sleep(600)
-        await ping_server()
+logging.getLogger("aiohttp").setLevel(logging.ERROR)
+logging.getLogger("pyrogram").setLevel(logging.ERROR)
+logging.getLogger("aiohttp.web").setLevel(logging.ERROR)
+
+server = web.AppRunner(web_server())
+loop = asyncio.get_event_loop()
 
 async def start_services():
-    """बॉट और वेब सर्वर स्टार्ट करने के लिए Main Function"""
-    print("Initializing Telegram Bot...")
-
-    # ✅ बॉट को पहले स्टार्ट करें
+    print()
+    if Var.SECONDARY:
+        print("------------------ Starting as Secondary Server ------------------")
+    else:
+        print("------------------- Starting as Primary Server -------------------")
+    print()
+    print("-------------------- Initializing Telegram Bot --------------------")
     await StreamBot.start()
-
-    # ✅ अब get_me() काम करेगा
     bot_info = await StreamBot.get_me()
-    print(f"✅ Bot Started as: {bot_info.first_name}")
-
-    # ✅ Clients Initialize करें
+    StreamBot.id = bot_info.id
+    StreamBot.username = bot_info.username
+    StreamBot.fname=bot_info.first_name
+    print("------------------------------ DONE ------------------------------")
+    print()
+    print("---------------------- Initializing Clients ----------------------")
     await initialize_clients()
-
-    print("Initializing Web Server...")
-    app = await web_server()  # ✅ Fix: Ensure web_server() is awaited
-    runner = web.AppRunner(app)
-    await runner.setup()
-    site = web.TCPSite(runner, Var.BIND_ADDRESS, Var.PORT)
-    await site.start()
-    print("✅ Web Server Started on {}:{}".format(Var.BIND_ADDRESS, Var.PORT))
-
-    # ✅ Keep-Alive Task चलाएँ
-    asyncio.create_task(keep_alive())
-
-    # ✅ बॉट को Running Mode में रखें
+    print("------------------------------ DONE ------------------------------")
+    print()
+    print("--------------------- Initializing Web Server ---------------------")
+    await server.setup()
+    await web.TCPSite(server, Var.BIND_ADDRESS, Var.PORT).start()
+    print("------------------------------ DONE ------------------------------")
+    print()
+    print("------------------------- Service Started -------------------------")
+    print("                        bot =>> {}".format(bot_info.first_name))
+    if bot_info.dc_id:
+        print("                        DC ID =>> {}".format(str(bot_info.dc_id)))
+    print(" URL =>> {}".format(Var.URL))
+    print('---------------------------------------------------------------------------------------------------------')
+    print(LOGO)
+    try: 
+        await StreamBot.send_message(chat_id=Var.OWNER_ID[0] ,text='<b>😎 ʙᴏᴛ ʀᴇsᴛᴀʀᴛᴇᴅ !!</b>')
+    except Exception as e:
+        print(f'got this err to send restart msg to owner : {e}')
     await idle()
 
-if __name__ == '__main__':
+async def cleanup():
+    await server.cleanup()
+    await StreamBot.stop()
+
+if __name__ == "__main__":
     try:
-        asyncio.run(start_services())  # ✅ Proper Async Execution
+        loop.run_until_complete(start_services())
     except KeyboardInterrupt:
-        logging.info('❌ Service Stopped!')
+        pass
+    except Exception as err:
+        logging.error(traceback.format_exc())
+    finally:
+        loop.run_until_complete(cleanup())
+        loop.stop()
+        print("------------------------ Stopped Services ------------------------")
         
