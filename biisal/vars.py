@@ -18,7 +18,6 @@ class Var(object):
     WORKERS = int(getenv('WORKERS', '4'))
     BIN_CHANNEL = int(getenv('BIN_CHANNEL', '-1002114619001'))
     NEW_USER_LOG = int(getenv('NEW_USER_LOG', '-1002114619001'))
-    PING_INTERVAL = int(environ.get("PING_INTERVAL", "1200"))  # 20 minutes
     OWNER_ID = [int(x) for x in os.environ.get("OWNER_ID", "5977931010").split()]
     APP_NAME = None
     OWNER_USERNAME = str(getenv('OWNER_USERNAME', 'BOT_OWNER26'))
