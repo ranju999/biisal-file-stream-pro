@@ -51,7 +51,7 @@ async def start_services():
     print("--------------------- Initializing Web Server ---------------------")
     app = web.AppRunner(await web_server())
     await app.setup()
-    await web.TCPSite(server, Var.BIND_ADDRESS, Var.PORT).start()
+    await web.TCPSite(app, Var.BIND_ADDRESS, Var.PORT).start()
     print("------------------------------ DONE ------------------------------")
     print()
     print("------------------------- Service Started -------------------------")
