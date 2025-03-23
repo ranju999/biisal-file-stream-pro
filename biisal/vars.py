@@ -30,6 +30,8 @@ class Var(object):
     URL = "http{}://{}{}/".format(
         "s" if HAS_SSL else "", FQDN, "" if NO_PORT else ":" + str(PORT)
     )
+    MODE = env.get("MODE", "primary")
+    SECONDARY = True if MODE.lower() == "secondary" else False
     DATABASE_URL = str(getenv('DATABASE_URL', 'mongodb+srv://aman727587:aman@cluster0.bk39x.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0'))
     UPDATES_CHANNEL = str(getenv('UPDATES_CHANNEL', 'av_botz')) 
     BANNED_CHANNELS = list(set(int(x) for x in str(getenv("BANNED_CHANNELS", "")).split()))   
