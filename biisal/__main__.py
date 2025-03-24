@@ -1,10 +1,10 @@
+# (c) @biisal
+# (c) adars h-goel
 import os
 import sys
 import glob
 import asyncio
 import logging
-import traceback
-import logging.handlers as handlers
 import importlib
 from pathlib import Path
 from pyrogram import idle
@@ -24,58 +24,76 @@ LOGO = """
 
 logging.basicConfig(
     level=logging.INFO,
-    datefmt="%d/%m/%Y %H:%M:%S",
-    format='[%(asctime)s] {%(pathname)s:%(lineno)d} %(levelname)s - %(message)s',
-    handlers=[logging.StreamHandler(stream=sys.stdout),
-              handlers.RotatingFileHandler("streambot.log", mode="a", maxBytes=104857600, backupCount=2, encoding="utf-8")],)
-
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 logging.getLogger("aiohttp").setLevel(logging.ERROR)
 logging.getLogger("pyrogram").setLevel(logging.ERROR)
 logging.getLogger("aiohttp.web").setLevel(logging.ERROR)
 
+ppath = "biisal/bot/plugins/*.py"
+files = glob.glob(ppath)
+StreamBot.start()
 loop = asyncio.get_event_loop()
 
+
 async def start_services():
-    print()
-    if Var.SECONDARY:
-        print("------------------ Starting as Secondary Server ------------------")
-    else:
-        print("------------------- Starting as Primary Server -------------------")
-    print()
-    print("-------------------- Initializing Telegram Bot --------------------")
-    await StreamBot.start()
+    print('\n')
+    print('------------------- Initalizing Telegram Bot -------------------')
     bot_info = await StreamBot.get_me()
-    StreamBot.id = bot_info.id
     StreamBot.username = bot_info.username
-    StreamBot.fname=bot_info.first_name
     print("------------------------------ DONE ------------------------------")
     print()
-    print("---------------------- Initializing Clients ----------------------")
+    print(
+        "---------------------- Initializing Clients ----------------------"
+    )
     await initialize_clients()
     print("------------------------------ DONE ------------------------------")
-    print()
-    print("--------------------- Initializing Web Server ---------------------")
+    print('\n')
+    print('--------------------------- Importing ---------------------------')
+    for name in files:
+        with open(name) as a:
+            patt = Path(a.name)
+            plugin_name = patt.stem.replace(".py", "")
+            plugins_dir = Path(f"biisal/bot/plugins/{plugin_name}.py")
+            import_path = ".plugins.{}".format(plugin_name)
+            spec = importlib.util.spec_from_file_location(import_path, plugins_dir)
+            load = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(load)
+            sys.modules["biisal.bot.plugins." + plugin_name] = load
+            print("Imported => " + plugin_name)
+    if Var.ON_HEROKU:
+        print("------------------ Starting Keep Alive Service ------------------")
+        print()
+        asyncio.create_task(ping_server())
+    print('-------------------- Initalizing Web Server -------------------------')
     app = web.AppRunner(await web_server())
     await app.setup()
-    await web.TCPSite(app, Var.BIND_ADDRESS, Var.PORT).start()
-    print("------------------------------ DONE ------------------------------")
-    print()
-    print("------------------------- Service Started -------------------------")
-    print("                        bot =>> {}".format(bot_info.first_name))
-    if bot_info.dc_id:
-        print("                        DC ID =>> {}".format(str(bot_info.dc_id)))
-    print(" URL =>> {}".format(Var.URL))
+    bind_address = "0.0.0.0" if Var.ON_HEROKU else Var.BIND_ADRESS
+    await web.TCPSite(app, bind_address, Var.PORT).start()
+    print('----------------------------- DONE ---------------------------------------------------------------------')
+    print('\n')
+    print('---------------------------------------------------------------------------------------------------------')
+    print('---------------------------------------------------------------------------------------------------------')
+    print(' follow me for more such exciting bots! https://github.com/biisal')
+    print('---------------------------------------------------------------------------------------------------------')
+    print('\n')
+    print('----------------------- Service Started -----------------------------------------------------------------')
+    print('                        bot =>> {}'.format((await StreamBot.get_me()).first_name))
+    print('                        server ip =>> {}:{}'.format(bind_address, Var.PORT))
+    print('                        Owner =>> {}'.format((Var.OWNER_USERNAME)))
+    if Var.ON_HEROKU:
+        print('                        app runnng on =>> {}'.format(Var.FQDN))
     print('---------------------------------------------------------------------------------------------------------')
     print(LOGO)
     try: 
-        await StreamBot.send_message(chat_id=Var.OWNER_ID[0] ,text='<b>😎 ʙᴏᴛ ʀᴇsᴛᴀʀᴛᴇᴅ !!</b>')
+        await StreamBot.send_message(chat_id=Var.OWNER_ID[0] ,text='<b>ᴊᴀɪ sʜʀᴇᴇ ᴋʀɪsʜɴᴀ 😎\nʙᴏᴛ ʀᴇsᴛᴀʀᴛᴇᴅ !!</b>')
     except Exception as e:
         print(f'got this err to send restart msg to owner : {e}')
     await idle()
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     try:
         loop.run_until_complete(start_services())
     except KeyboardInterrupt:
-        print("------------------------ Stopped Services ------------------------")
-        
+        logging.info('----------------------- Service Stopped -----------------------')
+     
