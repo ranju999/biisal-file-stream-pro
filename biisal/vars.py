@@ -33,7 +33,7 @@ class Var(object):
     
   #  NO_PORT = bool(getenv('NO_PORT', False))
     APP_NAME = None
-    if 'DYNO' in environ:
+    if 'DYNO' in env:
         ON_HEROKU = True
         APP_NAME = str(getenv('APP_NAME')) #dont need to fill anything here
     else:
